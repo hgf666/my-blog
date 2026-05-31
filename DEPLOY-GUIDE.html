@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hugo 博客部署指南</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f8f9fa; color: #1a1a1a; line-height: 1.6; }
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+  h1 { font-size: 28px; font-weight: 600; color: #1a1a1a; margin-bottom: 0.5rem; }
+  .subtitle { color: #666; font-size: 15px; margin-bottom: 2rem; }
+  .progress-bar { display: flex; gap: 0; margin-bottom: 2.5rem; border-radius: 10px; overflow: hidden; background: #e9ecef; }
+  .progress-item { flex: 1; padding: 10px 6px; text-align: center; font-size: 11px; font-weight: 500; cursor: pointer; transition: background 0.2s; color: #888; }
+  .progress-item.active { background: #2563eb; color: white; }
+  .progress-item.done { background: #16a34a; color: white; }
+  .step { display: none; }
+  .step.active { display: block; }
+  .card { background: white; border-radius: 12px; border: 1px solid #e5e7eb; padding: 1.5rem; margin-bottom: 1.25rem; }
+  .card-title { font-size: 17px; font-weight: 600; color: #1a1a1a; margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+  .badge { display: inline-block; background: #dbeafe; color: #1d4ed8; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+  .badge.green { background: #dcfce7; color: #15803d; }
+  .badge.orange { background: #fff7ed; color: #c2410c; }
+  .code-block { background: #1e1e2e; border-radius: 8px; padding: 1rem 1.25rem; font-family: 'Courier New', monospace; font-size: 13px; color: #cdd6f4; overflow-x: auto; margin: 0.75rem 0; position: relative; }
+  .code-block .comment { color: #6c7086; }
+  .copy-btn { position: absolute; top: 8px; right: 8px; background: #313244; border: none; color: #cdd6f4; padding: 4px 10px; border-radius: 5px; font-size: 11px; cursor: pointer; }
+  .copy-btn:hover { background: #45475a; }
+  .step-list { counter-reset: steps; }
+  .step-item { counter-increment: steps; display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-start; }
+  .step-num { width: 28px; height: 28px; min-width: 28px; background: #2563eb; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+  .step-num.done { background: #16a34a; }
+  .step-content { flex: 1; padding-top: 4px; }
+  .step-content strong { font-size: 14px; font-weight: 600; display: block; margin-bottom: 4px; }
+  .step-content p { font-size: 13px; color: #555; }
+  .tip { background: #eff6ff; border-left: 3px solid #2563eb; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; font-size: 13px; color: #1e40af; margin: 0.75rem 0; }
+  .warning { background: #fff7ed; border-left: 3px solid #f97316; padding: 0.75rem 1rem; border-radius: 0 8px 8px 0; font-size: 13px; color: #9a3412; margin: 0.75rem 0; }
+  .nav-btns { display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: space-between; }
+  .btn { padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; }
+  .btn-primary { background: #2563eb; color: white; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-secondary { background: white; color: #374151; border: 1px solid #d1d5db; }
+  .btn-secondary:hover { background: #f9fafb; }
+  .file-tree { font-family: 'Courier New', monospace; font-size: 13px; color: #374151; line-height: 2; background: #f8f9fa; border-radius: 8px; padding: 1rem; border: 1px solid #e5e7eb; }
+  .file-tree .dir { color: #1d4ed8; font-weight: 500; }
+  .file-tree .file { color: #059669; }
+  .file-tree .key-file { color: #dc2626; font-weight: 500; }
+  .img-placeholder { background: #f3f4f6; border: 2px dashed #d1d5db; border-radius: 8px; padding: 2rem; text-align: center; color: #9ca3af; font-size: 13px; margin: 0.75rem 0; }
+  .done-check { text-align: center; padding: 2rem; }
+  .done-check .big-icon { font-size: 64px; margin-bottom: 1rem; }
+  .done-check h2 { font-size: 22px; font-weight: 600; color: #15803d; margin-bottom: 0.5rem; }
+  .done-check p { color: #666; font-size: 14px; max-width: 400px; margin: 0 auto 1.5rem; }
+  .link-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; max-width: 420px; margin: 0 auto; }
+  .link-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 0.875rem; text-align: center; text-decoration: none; color: #1a1a1a; }
+  .link-card:hover { border-color: #2563eb; }
+  .link-card .lc-icon { font-size: 24px; margin-bottom: 4px; }
+  .link-card .lc-title { font-size: 13px; font-weight: 500; }
+  .link-card .lc-url { font-size: 11px; color: #888; margin-top: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🚀 Hugo 博客部署指南</h1>
+  <p class="subtitle">Hugo + PaperMod + Cloudflare Pages — 全程免费，全球加速</p>
+
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-item active" onclick="goStep(1)">1. 安装 Hugo</div>
+    <div class="progress-item" onclick="goStep(2)">2. 克隆主题</div>
+    <div class="progress-item" onclick="goStep(3)">3. 推送 GitHub</div>
+    <div class="progress-item" onclick="goStep(4)">4. 连接 Cloudflare</div>
+    <div class="progress-item" onclick="goStep(5)">5. 完成</div>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="step active" id="step1">
+    <div class="card">
+      <div class="card-title">
+        <span>安装 Hugo</span>
+        <span class="badge">第 1 步 / 共 4 步</span>
+      </div>
+      <p style="font-size:13px;color:#555;margin-bottom:1rem;">Hugo 是一个用 Go 编写的静态网站生成器，需要先安装到你的电脑上。</p>
+
+      <p style="font-size:13px;font-weight:500;margin-bottom:8px;">Windows 用户（推荐用 Scoop）：</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+        <span class="comment"># 1. 先安装 Scoop（如果没有）</span><br>
+        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser<br>
+        irm get.scoop.sh | iex<br><br>
+        <span class="comment"># 2. 安装 Hugo Extended 版本</span><br>
+        scoop install hugo-extended
+      </div>
+
+      <p style="font-size:13px;font-weight:500;margin:1rem 0 8px;">或者直接下载安装包：</p>
+      <div class="tip">前往 <strong>https://github.com/gohugoio/hugo/releases</strong>，下载最新版本的 <code>hugo_extended_xxx_windows-amd64.zip</code>，解压后将 hugo.exe 添加到系统 PATH 环境变量中。</div>
+
+      <p style="font-size:13px;font-weight:500;margin:1rem 0 8px;">验证安装：</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+        hugo version<br>
+        <span class="comment"># 应该显示类似：hugo v0.147.2+extended ...</span>
+      </div>
+
+      <p style="font-size:13px;font-weight:500;margin:1rem 0 8px;">同时确保已安装 Git：</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+        git --version<br>
+        <span class="comment"># 如果没有，前往 https://git-scm.com 下载安装</span>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <div></div>
+      <button class="btn btn-primary" onclick="goStep(2)">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="step" id="step2">
+    <div class="card">
+      <div class="card-title">
+        <span>克隆 PaperMod 主题</span>
+        <span class="badge">第 2 步 / 共 4 步</span>
+      </div>
+      <p style="font-size:13px;color:#555;margin-bottom:1rem;">博客文件已经在 <code>my-blog</code> 文件夹中准备好了，现在需要克隆 PaperMod 主题。</p>
+
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>进入博客目录</strong>
+            <div class="code-block" style="margin-top:8px">
+              <button class="copy-btn" onclick="copyCode(this)">复制</button>
+              cd my-blog
+            </div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>初始化 Git 并克隆主题</strong>
+            <div class="code-block" style="margin-top:8px">
+              <button class="copy-btn" onclick="copyCode(this)">复制</button>
+              git init<br>
+              git submodule add --depth=1 https://github.com/adityatelange/hugo-PaperMod.git themes/PaperMod
+            </div>
+            <div class="tip" style="margin-top:8px">这会把 PaperMod 主题作为 Git 子模块添加进来，Cloudflare Pages 部署时会自动拉取。</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>本地预览博客</strong>
+            <div class="code-block" style="margin-top:8px">
+              <button class="copy-btn" onclick="copyCode(this)">复制</button>
+              hugo server -D<br>
+              <span class="comment"># 打开浏览器访问 http://localhost:1313</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size:13px;font-weight:500;margin:1rem 0 8px;">博客文件结构：</p>
+      <div class="file-tree">
+        <span class="dir">my-blog/</span><br>
+        &nbsp;&nbsp;├── <span class="key-file">hugo.toml</span> &nbsp;&nbsp;&nbsp;← 主配置文件<br>
+        &nbsp;&nbsp;├── <span class="key-file">wrangler.toml</span> ← Cloudflare 构建配置<br>
+        &nbsp;&nbsp;├── .gitignore<br>
+        &nbsp;&nbsp;├── <span class="dir">content/</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp; ├── <span class="dir">posts/</span> ← 在这里写文章<br>
+        &nbsp;&nbsp;│&nbsp;&nbsp; │&nbsp;&nbsp; └── <span class="file">hello-world.md</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp; ├── <span class="dir">about/</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp; │&nbsp;&nbsp; └── <span class="file">index.md</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp; └── <span class="file">search.md</span><br>
+        &nbsp;&nbsp;├── <span class="dir">themes/</span><br>
+        &nbsp;&nbsp;│&nbsp;&nbsp; └── <span class="dir">PaperMod/</span> ← 主题目录<br>
+        &nbsp;&nbsp;├── <span class="dir">static/</span> ← 静态文件<br>
+        &nbsp;&nbsp;└── <span class="dir">.github/workflows/</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; └── <span class="file">deploy.yml</span>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goStep(1)">← 上一步</button>
+      <button class="btn btn-primary" onclick="goStep(3)">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="step" id="step3">
+    <div class="card">
+      <div class="card-title">
+        <span>创建 GitHub 仓库并推送</span>
+        <span class="badge">第 3 步 / 共 4 步</span>
+      </div>
+
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>在 GitHub 创建新仓库</strong>
+            <p>前往 <a href="https://github.com/new" target="_blank" style="color:#2563eb">github.com/new</a>，创建一个名为 <code>my-blog</code> 的仓库（选 Public 或 Private 都可以），<strong>不要</strong>勾选 "Initialize this repository with a README"。</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>推送本地代码到 GitHub</strong>
+            <div class="code-block" style="margin-top:8px">
+              <button class="copy-btn" onclick="copyCode(this)">复制</button>
+              <span class="comment"># 在 my-blog 目录下执行</span><br>
+              git add .<br>
+              git commit -m "feat: 初始化博客"<br>
+              git branch -M main<br>
+              git remote add origin https://github.com/你的用户名/my-blog.git<br>
+              git push -u origin main
+            </div>
+            <div class="warning" style="margin-top:8px">记得把 <code>你的用户名</code> 替换成你的真实 GitHub 用户名！</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goStep(2)">← 上一步</button>
+      <button class="btn btn-primary" onclick="goStep(4)">下一步 →</button>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="step" id="step4">
+    <div class="card">
+      <div class="card-title">
+        <span>连接 Cloudflare Pages</span>
+        <span class="badge orange">第 4 步 / 共 4 步</span>
+      </div>
+
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num">1</div>
+          <div class="step-content">
+            <strong>登录 Cloudflare Dashboard</strong>
+            <p>前往 <a href="https://dash.cloudflare.com" target="_blank" style="color:#2563eb">dash.cloudflare.com</a>，在左侧菜单找到 <strong>Workers & Pages</strong> → <strong>Create application</strong> → <strong>Pages</strong> → <strong>Connect to Git</strong></p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">2</div>
+          <div class="step-content">
+            <strong>连接 GitHub 仓库</strong>
+            <p>授权 Cloudflare 访问你的 GitHub 账号，然后选择刚才创建的 <code>my-blog</code> 仓库。</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">3</div>
+          <div class="step-content">
+            <strong>配置构建设置</strong>
+            <p>填写以下构建参数：</p>
+            <div style="background:#f8f9fa;border-radius:8px;padding:1rem;margin-top:8px;font-size:13px;">
+              <div style="display:grid;grid-template-columns:140px 1fr;gap:8px;">
+                <span style="color:#888;">Framework preset</span><span style="font-weight:500;">Hugo</span>
+                <span style="color:#888;">Build command</span><span style="font-family:monospace;background:#e5e7eb;padding:2px 6px;border-radius:4px;">hugo --minify</span>
+                <span style="color:#888;">Build output dir</span><span style="font-family:monospace;background:#e5e7eb;padding:2px 6px;border-radius:4px;">public</span>
+                <span style="color:#888;">Root directory</span><span style="color:#888;font-style:italic;">（留空）</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">4</div>
+          <div class="step-content">
+            <strong>添加环境变量</strong>
+            <p>在 <strong>Environment variables</strong> 中添加：</p>
+            <div style="background:#f8f9fa;border-radius:8px;padding:1rem;margin-top:8px;font-size:13px;">
+              <div style="display:grid;grid-template-columns:180px 1fr;gap:8px;">
+                <span style="font-family:monospace;color:#dc2626;">HUGO_VERSION</span><span style="font-family:monospace;">0.147.2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num">5</div>
+          <div class="step-content">
+            <strong>点击 Save and Deploy</strong>
+            <p>Cloudflare 会自动构建并部署你的博客，通常 1~2 分钟内完成。部署成功后会获得一个 <code>xxx.pages.dev</code> 的访问地址。</p>
+            <div class="tip" style="margin-top:8px">之后每次 <code>git push</code> 到 main 分支，Cloudflare Pages 会自动重新部署！</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goStep(3)">← 上一步</button>
+      <button class="btn btn-primary" onclick="goStep(5)">完成 ✓</button>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="step" id="step5">
+    <div class="done-check">
+      <div class="big-icon">🎉</div>
+      <h2>恭喜！博客搭建完成</h2>
+      <p>你的 Hugo 博客已经部署到 Cloudflare Pages，全球 CDN 加速，完全免费！</p>
+    </div>
+
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title">接下来可以做的事</div>
+      <div class="step-list">
+        <div class="step-item">
+          <div class="step-num done">✓</div>
+          <div class="step-content">
+            <strong>写新文章</strong>
+            <p>在 <code>content/posts/</code> 目录下创建 Markdown 文件，推送到 GitHub 后自动部署。</p>
+            <div class="code-block" style="margin-top:8px">
+              <button class="copy-btn" onclick="copyCode(this)">复制</button>
+              hugo new posts/我的新文章.md
+            </div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num done">✓</div>
+          <div class="step-content">
+            <strong>更新博客信息</strong>
+            <p>编辑 <code>hugo.toml</code> 文件，修改博客标题、作者名、社交链接等。别忘了修改 <code>baseURL</code> 为你实际的 pages.dev 地址。</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num done">✓</div>
+          <div class="step-content">
+            <strong>绑定自定义域名</strong>
+            <p>如果你有自己的域名，在 Cloudflare Pages 项目设置中添加 Custom domains，然后在 DNS 中添加 CNAME 记录指向 <code>xxx.pages.dev</code> 即可。</p>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-num done">✓</div>
+          <div class="step-content">
+            <strong>添加评论系统（可选）</strong>
+            <p>PaperMod 支持 Disqus、utterances（GitHub Issues）等评论系统，在 hugo.toml 中配置即可。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">有用的链接</div>
+      <div class="link-grid">
+        <a class="link-card" href="https://github.com/adityatelange/hugo-PaperMod/wiki" target="_blank">
+          <div class="lc-icon">📖</div>
+          <div class="lc-title">PaperMod 文档</div>
+          <div class="lc-url">github.com/...wiki</div>
+        </a>
+        <a class="link-card" href="https://gohugo.io/documentation/" target="_blank">
+          <div class="lc-icon">📚</div>
+          <div class="lc-title">Hugo 官方文档</div>
+          <div class="lc-url">gohugo.io/documentation</div>
+        </a>
+        <a class="link-card" href="https://developers.cloudflare.com/pages/" target="_blank">
+          <div class="lc-icon">☁️</div>
+          <div class="lc-title">Cloudflare Pages</div>
+          <div class="lc-url">developers.cloudflare.com</div>
+        </a>
+        <a class="link-card" href="https://github.com/new" target="_blank">
+          <div class="lc-icon">🐙</div>
+          <div class="lc-title">创建 GitHub 仓库</div>
+          <div class="lc-url">github.com/new</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="nav-btns">
+      <button class="btn btn-secondary" onclick="goStep(4)">← 返回上一步</button>
+      <div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentStep = 1;
+  const totalSteps = 5;
+
+  function goStep(n) {
+    document.getElementById('step' + currentStep).classList.remove('active');
+    document.querySelectorAll('.progress-item').forEach((el, i) => {
+      el.classList.remove('active', 'done');
+      if (i + 1 < n) el.classList.add('done');
+      if (i + 1 === n) el.classList.add('active');
+    });
+    currentStep = n;
+    document.getElementById('step' + currentStep).classList.add('active');
+    window.scrollTo(0, 0);
+  }
+
+  function copyCode(btn) {
+    const block = btn.parentElement;
+    const text = block.innerText.replace('复制\n', '').replace('复制', '').trim();
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = '已复制!';
+      setTimeout(() => btn.textContent = '复制', 2000);
+    });
+  }
+</script>
+</body>
+</html>
